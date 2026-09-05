@@ -261,7 +261,7 @@ Our pre-processing pipeline computes the orientation transformation matrix, alig
 
 ## 👥 Contributors & Acknowledgements
 - **Author**: Ashmit Rana & Team
-- **Competition**: Smart India Hackathon (SIH) 2024
+- **Competition**: Smart India Hackathon (SIH) 2026
 - **Problem Statement**: AI-ML Based Intelligent Dead Reckoning System
 - **Theme**: Smart Vehicles | **Organization**: ISRO
 - **Dataset Reference**: [IO-VNBD (Input-Output Vehicle Navigation Benchmark Dataset)](https://github.com/onyekpeu/IO-VNBD)
