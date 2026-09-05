@@ -1,0 +1,35 @@
+{
+  "Raw DR": {
+    "RMSE_m": 188873.3163679278,
+    "MAE_m": 116536.35643151424,
+    "Max_error_m": 582493.3704035542,
+    "Final_error_m": 582493.3704035542,
+    "Total_distance_m": 22117.41668121707,
+    "Blackout_RMSE_m": 19094.026416585588,
+    "Blackout_max_error_m": 28548.911611404383,
+    "Blackout_distance_m": 2341.871439069481,
+    "Drift_percent": 1219.0639987798822
+  },
+  "EKF": {
+    "RMSE_m": 101.26306989757494,
+    "MAE_m": 24.318473006512622,
+    "Max_error_m": 1039.045778910541,
+    "Final_error_m": 2.7552714527487376,
+    "Total_distance_m": 22117.41668121707,
+    "Blackout_RMSE_m": 277.22289582777074,
+    "Blackout_max_error_m": 1039.045778910541,
+    "Blackout_distance_m": 2341.871439069481,
+    "Drift_percent": 44.36818185559304
+  },
+  "AI-EKF": {
+    "RMSE_m": 10.672146582371719,
+    "MAE_m": 4.548496156179617,
+    "Max_error_m": 122.84352131308424,
+    "Final_error_m": 2.755271927101607,
+    "Total_distance_m": 22117.41668121707,
+    "Blackout_RMSE_m": 28.258378689025463,
+    "Blackout_max_error_m": 122.84352131308424,
+    "Blackout_distance_m": 2341.871439069481,
+    "Drift_percent": 5.245527968089268
+  }
+}

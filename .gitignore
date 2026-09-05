@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary logs and caches
+*.log
+scratch/
+.pytest_cache/
+
+# Data: Keep folder structure but ignore large CSVs if desired
+# data/raw/*.csv
