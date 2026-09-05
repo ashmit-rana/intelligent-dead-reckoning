@@ -24,5 +24,6 @@ ENV/
 scratch/
 .pytest_cache/
 
-# Data: Keep folder structure but ignore large CSVs if desired
-# data/raw/*.csv
+# Data: ignore large raw CSVs (download via download_real_dataset.py)
+data/raw/
+data/processed/
