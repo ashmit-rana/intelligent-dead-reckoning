@@ -1,35 +1,35 @@
 {
   "Raw DR": {
-    "RMSE_m": 188873.3163679278,
-    "MAE_m": 116536.35643151424,
-    "Max_error_m": 582493.3704035542,
-    "Final_error_m": 582493.3704035542,
-    "Total_distance_m": 22117.41668121707,
-    "Blackout_RMSE_m": 19094.026416585588,
-    "Blackout_max_error_m": 28548.911611404383,
-    "Blackout_distance_m": 2341.871439069481,
-    "Drift_percent": 1219.0639987798822
+    "RMSE_m": 28041.788065304863,
+    "MAE_m": 23765.888584741337,
+    "Max_error_m": 57850.35076897184,
+    "Final_error_m": 57850.35076897184,
+    "Total_distance_m": 12631.01463634787,
+    "Blackout_RMSE_m": 12883.154787838053,
+    "Blackout_max_error_m": 17441.21042787052,
+    "Blackout_distance_m": 517.104643322682,
+    "Drift_percent": 3372.8589857173083
   },
   "EKF": {
-    "RMSE_m": 101.26306989757494,
-    "MAE_m": 24.318473006512622,
-    "Max_error_m": 1039.045778910541,
-    "Final_error_m": 2.7552714527487376,
-    "Total_distance_m": 22117.41668121707,
-    "Blackout_RMSE_m": 277.22289582777074,
-    "Blackout_max_error_m": 1039.045778910541,
-    "Blackout_distance_m": 2341.871439069481,
-    "Drift_percent": 44.36818185559304
+    "RMSE_m": 45.466120848652615,
+    "MAE_m": 37.42632030400013,
+    "Max_error_m": 269.1388540251199,
+    "Final_error_m": 55.21313169182387,
+    "Total_distance_m": 12631.01463634787,
+    "Blackout_RMSE_m": 113.8958976970534,
+    "Blackout_max_error_m": 269.1388540251199,
+    "Blackout_distance_m": 517.104643322682,
+    "Drift_percent": 52.04727079914707
   },
   "AI-EKF": {
-    "RMSE_m": 10.672146582371719,
-    "MAE_m": 4.548496156179617,
-    "Max_error_m": 122.84352131308424,
-    "Final_error_m": 2.755271927101607,
-    "Total_distance_m": 22117.41668121707,
-    "Blackout_RMSE_m": 28.258378689025463,
-    "Blackout_max_error_m": 122.84352131308424,
-    "Blackout_distance_m": 2341.871439069481,
-    "Drift_percent": 5.245527968089268
+    "RMSE_m": 42.307819299460085,
+    "MAE_m": 36.39334559768255,
+    "Max_error_m": 121.23943806829477,
+    "Final_error_m": 55.21313159610329,
+    "Total_distance_m": 12631.01463634787,
+    "Blackout_RMSE_m": 52.20958930394136,
+    "Blackout_max_error_m": 84.73974838720308,
+    "Blackout_distance_m": 517.104643322682,
+    "Drift_percent": 16.387350119833297
   }
 }

@@ -254,7 +254,7 @@ def plot_trajectory_comparison(df: pd.DataFrame,
     os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     print(f"[Plot] Saved trajectory comparison → {save_path}")
-    plt.show()
+    plt.close(fig)
     return fig
 
 
@@ -292,7 +292,7 @@ def plot_training_curves(history: dict,
     os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     print(f"[Plot] Saved training curves → {save_path}")
-    plt.show()
+    plt.close(fig)
     return fig
 
 
@@ -341,7 +341,7 @@ def plot_speed_prediction(df: pd.DataFrame,
     os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     print(f"[Plot] Saved speed prediction → {save_path}")
-    plt.show()
+    plt.close(fig)
     return fig
 
 
@@ -431,7 +431,7 @@ def plot_blackout_analysis(df: pd.DataFrame,
     os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
     print(f"[Plot] Saved blackout analysis → {save_path}")
-    plt.show()
+    plt.close(fig)
     return fig
 
 

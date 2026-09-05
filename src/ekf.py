@@ -384,24 +384,28 @@ def run_ekf_pipeline(df: pd.DataFrame,
 
     Returns dict with estimated trajectory arrays.
     """
-    lat0_approx = 28.6315
-    lon0_approx = 77.2167
-    METERS_PER_DEG_LAT = 111320.0
-    METERS_PER_DEG_LON = 111320.0 * np.cos(np.radians(lat0_approx))
-
     # Detect lat0, lon0 from first valid GPS fix
     valid_gps = df[df["lat"].notna()]
     if len(valid_gps) > 0:
-        lat0 = valid_gps["lat"].iloc[0]
-        lon0 = valid_gps["lon"].iloc[0]
+        lat0 = float(valid_gps["lat"].iloc[0])
+        lon0 = float(valid_gps["lon"].iloc[0])
     else:
-        lat0, lon0 = lat0_approx, lon0_approx
+        lat0, lon0 = 28.6315, 77.2167
+
+    METERS_PER_DEG_LAT = 111320.0
+    METERS_PER_DEG_LON = 111320.0 * np.cos(np.radians(lat0))
 
     n = len(df)
     dt_default = 0.1
 
     ekf = EKF(dt=dt_default)
-    ekf.reset()
+    ekf.reset(lat0=lat0, lon0=lon0)
+
+    # Initialize heading if ground truth or GPS orientation is available
+    if "gt_heading" in df.columns and not np.isnan(df["gt_heading"].iloc[0]):
+        ekf.x[4] = float(df["gt_heading"].iloc[0])
+    elif "heading" in df.columns and not np.isnan(df["heading"].iloc[0]):
+        ekf.x[4] = float(df["heading"].iloc[0])
 
     ax_col = "ax_corr" if "ax_corr" in df.columns else "ax"
     ay_col = "ay_corr" if "ay_corr" in df.columns else "ay"

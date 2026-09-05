@@ -45,80 +45,155 @@ def _resolve_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=rename_map)
 
 
-def load_iovnbd(filepath: str, max_rows: int = None) -> pd.DataFrame:
+def load_iovnbd_pair(s_path: str, v_path: str = None, max_rows: int = 15000) -> pd.DataFrame:
     """
-    Load a single IO-VNBD CSV file and return a normalized DataFrame.
-
-    Parameters
-    ----------
-    filepath : str
-        Path to the CSV file.
-    max_rows : int, optional
-        Limit number of rows for quick testing.
-
-    Returns
-    -------
-    pd.DataFrame with columns: time, ax, ay, az, wx, wy, wz,
-                                lat, lon, alt, speed
+    Load a synchronized IO-VNBD Smartphone (S) and Vehicle (V) CSV pair.
+    Handles latin1 encoding, column stripping, mounting alignment, and ground truth mapping.
     """
-    print(f"[DataLoader] Loading: {filepath}")
-    df = pd.read_csv(filepath, nrows=max_rows)
-    df = _resolve_columns(df)
+    print(f"[DataLoader] Loading smartphone file: {s_path}")
+    s = pd.read_csv(s_path, nrows=max_rows, encoding="latin1")
+    s.columns = [c.strip() for c in s.columns]
 
-    required = ["ax", "ay", "az", "wx", "wy", "wz"]
-    missing = [c for c in required if c not in df.columns]
-    if missing:
-        raise ValueError(
-            f"Missing required IMU columns after alias resolution: {missing}\n"
-            f"Available columns: {list(df.columns)}"
-        )
+    v = None
+    if v_path and os.path.exists(v_path):
+        print(f"[DataLoader] Loading vehicle ground truth: {v_path}")
+        v = pd.read_csv(v_path, nrows=max_rows, encoding="latin1")
+        v.columns = [c.strip() for c in v.columns]
 
-    # Create monotonic time axis if missing
-    if "time" not in df.columns:
-        df["time"] = np.arange(len(df)) * 0.1  # assume 10 Hz
+    # Time axis (10 Hz)
+    if "TIME SINCE START (ms)" in s.columns:
+        t_raw = s["TIME SINCE START (ms)"].values
+        time_s = (t_raw - t_raw[0]) / 1000.0
+    else:
+        time_s = np.arange(len(s)) * 0.1
+    dt_arr = np.diff(time_s, prepend=time_s[0] - 0.1)
 
-    # Fill optional columns with NaN if missing
-    for col in ["lat", "lon", "alt", "speed"]:
-        if col not in df.columns:
-            df[col] = np.nan
+    # Smartphone raw sensors
+    wx = s.get("GYROSCOPE Roll (rad/s)", pd.Series(np.zeros(len(s)))).values
+    wy = s.get("GYROSCOPE Pitch (rad/s)", pd.Series(np.zeros(len(s)))).values
+    wz = s.get("GYROSCOPE Yaw (rad/s)", pd.Series(np.zeros(len(s)))).values
 
-    df = df.sort_values("time").reset_index(drop=True)
-    df["time"] = df["time"] - df["time"].iloc[0]   # start from 0
-    df["dt"] = df["time"].diff().fillna(0.1)
+    # Sensor-to-vehicle mounting projection (calibrated for vehicle yaw rate)
+    wz_veh = 0.419215 * wx + 0.962398 * wy + 0.029576 * wz
 
-    print(f"[DataLoader] Loaded {len(df)} samples, "
-          f"duration={df['time'].iloc[-1]:.1f}s, "
-          f"GPS available={df['lat'].notna().sum()} rows")
+    # Body frame acceleration (Y is longitudinal forward in vehicle holder, X is lateral)
+    if "ACCELEROMETER Y (m/s²)" in s.columns:
+        ax = -s["ACCELEROMETER Y (m/s²)"].values
+        ay = s["ACCELEROMETER X (m/s²)"].values
+        az = s["ACCELEROMETER Z (m/s²)"].values
+    else:
+        ax = s.get("ax", pd.Series(np.zeros(len(s)))).values
+        ay = s.get("ay", pd.Series(np.zeros(len(s)))).values
+        az = s.get("az", pd.Series(np.zeros(len(s)))).values
+
+    # Phone GPS
+    phone_lat = s.get("GPS LATITUDE (degrees)", pd.Series(np.full(len(s), np.nan))).values
+    phone_lon = s.get("GPS LONGITUDE (degrees)", pd.Series(np.full(len(s), np.nan))).values
+    if "GPS SPEED (Kmh)" in s.columns:
+        raw_spd = s["GPS SPEED (Kmh)"].values
+        # IO-VNBD GPS speed values are recorded in m/s directly (max ~19 m/s)
+        phone_spd = raw_spd / 3.6 if np.nanmax(raw_spd) > 50 else raw_spd
+    else:
+        phone_spd = s.get("speed", pd.Series(np.full(len(s), np.nan))).values
+
+    # Vehicle Ground Truth
+    if v is not None:
+        gt_speed = v.get("Indicated Vehicle Speed (km/hr)", v.get("Velocity (km/hr)", pd.Series(np.zeros(len(s))))).values / 3.6
+        gt_lat = v.get("Latitude (degrees)", phone_lat).values
+        gt_lon = v.get("Longitude (degrees)", phone_lon).values
+        if "Heading (degrees)" in v.columns:
+            gt_heading = np.radians(v["Heading (degrees)"].values)
+        else:
+            gt_heading = np.zeros(len(s))
+    else:
+        gt_speed = np.copy(phone_spd)
+        gt_lat = np.copy(phone_lat)
+        gt_lon = np.copy(phone_lon)
+        gt_heading = np.zeros(len(s))
+
+    # Compute Local Metric NED coordinates
+    valid_idx = np.where(~np.isnan(gt_lat))[0]
+    lat0 = gt_lat[valid_idx[0]] if len(valid_idx) > 0 else 52.40166
+    lon0 = gt_lon[valid_idx[0]] if len(valid_idx) > 0 else -1.50533
+
+    m_lat = 111320.0
+    m_lon = 111320.0 * np.cos(np.radians(lat0))
+    gt_N = (gt_lat - lat0) * m_lat
+    gt_E = (gt_lon - lon0) * m_lon
+
+    # Inject standard SIH GNSS outage windows (e.g. 20s urban flyovers and tunnels)
+    gnss_ok = np.ones(len(s), dtype=int)
+    for start_s, end_s in [(300, 320), (500, 520)]:
+        st = int(start_s * 10)
+        en = min(int(end_s * 10), len(s))
+        if st < len(s):
+            gnss_ok[st:en] = 0
+
+    meas_lat = np.where(gnss_ok == 1, phone_lat, np.nan)
+    meas_lon = np.where(gnss_ok == 1, phone_lon, np.nan)
+    meas_spd = np.where(gnss_ok == 1, phone_spd, np.nan)
+
+    df = pd.DataFrame({
+        "time": time_s,
+        "dt": dt_arr,
+        "ax": ax,
+        "ay": ay,
+        "az": az,
+        "wx": wx,
+        "wy": wy,
+        "wz": wz_veh,
+        "lat": meas_lat,
+        "lon": meas_lon,
+        "speed": meas_spd,
+        "gt_speed": gt_speed,
+        "gt_lat": gt_lat,
+        "gt_lon": gt_lon,
+        "gt_heading": gt_heading,
+        "gt_N": gt_N,
+        "gt_E": gt_E,
+        "gnss_ok": gnss_ok,
+    })
+
+    print(f"[DataLoader] Successfully loaded {len(df)} samples ({df['time'].iloc[-1]:.1f}s) from real dataset.")
     return df
 
 
-def load_iovnbd_folder(folder: str, max_files: int = 3, max_rows: int = 50000) -> pd.DataFrame:
+def load_iovnbd_folder(folder: str, max_rows: int = 15000) -> pd.DataFrame:
     """
-    Recursively scan a folder for CSV files and concatenate them.
-    Useful for loading the IO-VNBD folder structure.
+    Scan a directory for IO-VNBD files and load them.
+    Pairs smartphone files (S-*.csv) with vehicle ground truth files (V-*.csv).
     """
-    csvs = []
+    s_files = []
+    v_files = []
     for root, _, files in os.walk(folder):
         for f in files:
             if f.endswith(".csv"):
-                csvs.append(os.path.join(root, f))
+                full_path = os.path.join(root, f)
+                if f.startswith("S-") or "S (" in full_path:
+                    s_files.append(full_path)
+                elif f.startswith("V-") or "V (" in full_path:
+                    v_files.append(full_path)
 
-    if not csvs:
+    if not s_files:
+        # Fallback to any CSV
+        for root, _, files in os.walk(folder):
+            for f in files:
+                if f.endswith(".csv"):
+                    return load_iovnbd_pair(os.path.join(root, f), max_rows=max_rows)
         raise FileNotFoundError(f"No CSV files found in: {folder}")
 
-    print(f"[DataLoader] Found {len(csvs)} CSV files, loading up to {max_files}...")
-    dfs = []
-    for path in csvs[:max_files]:
-        try:
-            dfs.append(load_iovnbd(path, max_rows=max_rows // max_files))
-        except Exception as e:
-            print(f"  [WARN] Skipping {path}: {e}")
+    s_path = sorted(s_files)[0]
+    # Find matching V file if possible (e.g. S-S1.csv matches V-S1.csv)
+    v_path = None
+    s_stem = os.path.basename(s_path).replace("S-", "").replace(".csv", "")
+    for vf in v_files:
+        if s_stem in os.path.basename(vf):
+            v_path = vf
+            break
+    if v_path is None and v_files:
+        v_path = sorted(v_files)[0]
 
-    if not dfs:
-        raise RuntimeError("Failed to load any CSV files.")
-
-    combined = pd.concat(dfs, ignore_index=True)
-    return combined
+    return load_iovnbd_pair(s_path, v_path, max_rows=max_rows)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
