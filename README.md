@@ -7,6 +7,22 @@
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-brightgreen.svg)]()
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)]()
+[![Documentation](https://img.shields.io/badge/Docs-Complete%20Guide-blue.svg)](docs/README.md)
+
+---
+
+## 📚 Documentation Suite
+
+Comprehensive technical documentation is available in the [`docs/`](docs/README.md) directory:
+
+- **[Documentation Hub](docs/README.md)**: Index and quickstart guide.
+- **[System Overview](docs/overview.md)**: Motivation, SIH26168 problem formulation, and solution strategy.
+- **[Architecture & Math](docs/architecture.md)**: 8-State EKF formulation, state transitions, Jacobians, and constraints.
+- **[Deep Learning Models](docs/models.md)**: BiLSTM architecture, temporal attention, and quantization.
+- **[Experimental Results](docs/results.md)**: Benchmarks on authentic 12.63 km IO-VNBD telemetry.
+- **[Development Guide](docs/development.md)**: Environment setup, execution scripts, and modular testing.
+- **[Data Pipeline](docs/pipeline.md)**: Coordinate transformations, DCM attitude alignment, and Butterworth filtering.
+- **[Edge Deployment](docs/deployment.md)**: Android NDK, iOS SDK, and ISRO NavIC integration.
 
 ---
 

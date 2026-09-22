@@ -27,3 +27,11 @@ scratch/
 # Data: ignore large raw CSVs (download via download_real_dataset.py)
 data/raw/
 data/processed/
+
+# Local study & presentation guides (kept offline)
+docs_for_presentation/
+
+# Temporary build artifacts
+.chart-data-*/
+.codex-*/
+
